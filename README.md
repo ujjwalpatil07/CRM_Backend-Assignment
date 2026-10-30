@@ -58,7 +58,8 @@ crm-backend/
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/<your-username>/crm-backend.git
+   git clone https://github.com/ujjwalpatil07/CRM_Backend-Assignment.git
+
    cd crm-backend
    ```
 
@@ -297,5 +298,5 @@ This implementation covers the assignment's stated API requirements. Before usin
 
 ## Author
 
-**Name:** `<Your Name>`  
+**Name:** `Ujjwal Patil`  
 **Role:** Node.js Developer Assignment
