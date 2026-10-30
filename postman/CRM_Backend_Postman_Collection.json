@@ -1,0 +1,1264 @@
+{
+  "info": {
+    "_postman_id": "d7f25c8e-6b73-4d4f-a3c8-8b5b0c7a4b31",
+    "name": "CRM Backend API Tests",
+    "description": "End-to-end Postman collection for the CRM Node.js/Express/MongoDB assignment. Run folders in order. Registration requests generate unique employee email addresses; tests save JWTs and enquiry IDs into the selected environment.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "tokenA",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tokenB",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employeeAEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employeeBEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employeeAId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employeeBId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "enquiryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "enquiryId2",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns API status message', () => pm.expect(pm.response.json().message).to.eql('CRM REST API is running.'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown endpoint returns 404",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/does-not-exist"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Returns 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Authentication",
+      "item": [
+        {
+          "name": "Register Employee A (creates fresh email each run)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rahul Sharma\",\n  \"email\": \"{{employeeAEmail}}\",\n  \"password\": \"SecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee A registration returns 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json();",
+                  "pm.test('Response contains JWT and employee', () => { pm.expect(data.token).to.be.a('string'); pm.expect(data.employee.email).to.eql(pm.environment.get('employeeAEmail')); });",
+                  "pm.environment.set('tokenA', data.token);",
+                  "pm.environment.set('employeeAId', data.employee.id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = Date.now();",
+                  "pm.environment.set('employeeAEmail', `rahul.${runId}@example.com`);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Employee B (creates fresh email each run)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Priya Deshmukh\",\n  \"email\": \"{{employeeBEmail}}\",\n  \"password\": \"SecurePass456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee B registration returns 201', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json();",
+                  "pm.test('Response contains JWT and employee', () => { pm.expect(data.token).to.be.a('string'); pm.expect(data.employee.email).to.eql(pm.environment.get('employeeBEmail')); });",
+                  "pm.environment.set('tokenB', data.token);",
+                  "pm.environment.set('employeeBId', data.employee.id);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const runId = Date.now();",
+                  "pm.environment.set('employeeBEmail', `priya.${runId}@example.com`);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate Employee A email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate Rahul\",\n  \"email\": \"{{employeeAEmail}}\",\n  \"password\": \"SecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Duplicate email returns 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Employee A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employeeAEmail}}\",\n  \"password\": \"SecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee A login returns 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.environment.set('tokenA', data.token);",
+                  "pm.test('Password is not returned', () => pm.expect(data.employee).to.not.have.property('password'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Employee B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employeeBEmail}}\",\n  \"password\": \"SecurePass456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee B login returns 200', () => pm.response.to.have.status(200));",
+                  "pm.environment.set('tokenB', pm.response.json().token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login with incorrect password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employeeAEmail}}\",\n  \"password\": \"WrongPassword123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid credentials return 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register with invalid email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bad Email\",\n  \"email\": \"not-an-email\",\n  \"password\": \"SecurePass123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid email returns 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register with short password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Short Password\",\n  \"email\": \"short.password@example.com\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Short password returns 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login with missing password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employeeAEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing password returns 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Public Enquiry Form",
+      "item": [
+        {
+          "name": "Create Enquiry 1 (public; saves enquiryId)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amit Patil\",\n  \"email\": \"amit.{{$timestamp}}@example.com\",\n  \"phone\": \"9876543210\",\n  \"courseInterest\": \"Full Stack Development\",\n  \"message\": \"Interested in the next batch\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Public form works without JWT', () => pm.response.to.have.status(201));",
+                  "const data = pm.response.json();",
+                  "pm.test('New enquiry starts unclaimed', () => { pm.expect(data.enquiry.claimedBy).to.eql(null); pm.expect(data.enquiry.claimedAt).to.eql(null); });",
+                  "pm.environment.set('enquiryId', data.enquiry._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Enquiry 2 (public; saves enquiryId2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Neha Kulkarni\",\n  \"email\": \"neha.{{$timestamp}}@example.com\",\n  \"phone\": \"9988776655\",\n  \"courseInterest\": \"Data Analytics\",\n  \"message\": \"Please share course details\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Second public enquiry returns 201', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('enquiryId2', pm.response.json().enquiry._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit enquiry with invalid email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid Email\",\n  \"email\": \"bad-email\",\n  \"courseInterest\": \"Java\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid enquiry email returns 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit enquiry with missing required fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Missing Fields\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing required fields return 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit enquiry with invalid phone type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invalid Phone\",\n  \"email\": \"invalid.phone@example.com\",\n  \"phone\": 12345,\n  \"courseInterest\": \"Java\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid phone type returns 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attempt to inject claimedBy (server should ignore it)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Injection Test\",\n  \"email\": \"inject.{{$timestamp}}@example.com\",\n  \"courseInterest\": \"React\",\n  \"claimedBy\": \"{{employeeAId}}\",\n  \"claimedAt\": \"2026-01-01T00:00:00.000Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Enquiry is still created as public', () => pm.response.to.have.status(201));",
+                  "const enquiry = pm.response.json().enquiry;",
+                  "pm.test('Client cannot set ownership fields', () => { pm.expect(enquiry.claimedBy).to.eql(null); pm.expect(enquiry.claimedAt).to.eql(null); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Authentication Guards",
+      "item": [
+        {
+          "name": "Public leads without token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Protected route rejects missing JWT', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public leads with invalid token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.token.value"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Protected route rejects invalid JWT', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My enquiries without token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/my"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('My enquiries rejects missing JWT', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Public Leads",
+      "item": [
+        {
+          "name": "Employee A fetches public leads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Public leads returns 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "const ids = data.enquiries.map(item => item._id);",
+                  "pm.test('Both newly-created enquiries are in the public list', () => { pm.expect(ids).to.include(pm.environment.get('enquiryId')); pm.expect(ids).to.include(pm.environment.get('enquiryId2')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee A fetches public leads with pagination",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public?page=1&limit=1"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Paginated public leads returns 200', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Pagination limit is applied', () => pm.expect(data.enquiries.length).to.be.at.most(1));",
+                  "pm.test('Pagination metadata is present', () => { pm.expect(data.pagination.page).to.eql(1); pm.expect(data.pagination.limit).to.eql(1); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public leads with invalid page and limit values",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public?page=-3&limit=-1"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid pagination values fall back safely', () => pm.response.to.have.status(200));",
+                  "const pagination = pm.response.json().pagination;",
+                  "pm.test('Fallback values are page 1 and limit 20', () => { pm.expect(pagination.page).to.eql(1); pm.expect(pagination.limit).to.eql(20); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public leads with limit greater than 100",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public?page=1&limit=1000"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Large page size request returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Maximum limit is capped at 100', () => pm.expect(pm.response.json().pagination.limit).to.eql(100));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Claim Leads",
+      "item": [
+        {
+          "name": "Employee A claims Enquiry 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/{{enquiryId}}/claim"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('First claim succeeds', () => pm.response.to.have.status(200));",
+                  "const data = pm.response.json();",
+                  "pm.test('Lead is assigned to Employee A', () => pm.expect(data.enquiry.claimedBy).to.eql(pm.environment.get('employeeAId')));",
+                  "pm.test('Claim timestamp is stored', () => pm.expect(data.enquiry.claimedAt).to.be.a('string').and.not.empty);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee A tries to claim the same lead again",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/{{enquiryId}}/claim"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Already-claimed lead returns 409', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee B tries to claim Employee A lead",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/{{enquiryId}}/claim"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Other employee cannot claim an owned lead', () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Claim with malformed enquiry ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/not-a-valid-object-id/claim"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Malformed ID returns 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Claim with valid but nonexistent enquiry ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/507f1f77bcf86cd799439011/claim"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Nonexistent enquiry returns 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee B claims Enquiry 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/{{enquiryId2}}/claim"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee B can claim another unclaimed lead', () => pm.response.to.have.status(200));",
+                  "pm.test('Lead is assigned to Employee B', () => pm.expect(pm.response.json().enquiry.claimedBy).to.eql(pm.environment.get('employeeBId')));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - My Leads and Ownership",
+      "item": [
+        {
+          "name": "Employee A fetches their claimed leads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/my"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee A my leads returns 200', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().enquiries.map(item => item._id);",
+                  "pm.test('Employee A sees Enquiry 1', () => pm.expect(ids).to.include(pm.environment.get('enquiryId')));",
+                  "pm.test('Employee A does not see Employee B Enquiry 2', () => pm.expect(ids).to.not.include(pm.environment.get('enquiryId2')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee B fetches their claimed leads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/my"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Employee B my leads returns 200', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().enquiries.map(item => item._id);",
+                  "pm.test('Employee B sees Enquiry 2', () => pm.expect(ids).to.include(pm.environment.get('enquiryId2')));",
+                  "pm.test('Employee B does not see Employee A Enquiry 1', () => pm.expect(ids).to.not.include(pm.environment.get('enquiryId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee A requests my leads with another employee ID in query",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/my?employeeId={{employeeBId}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Query parameter cannot change owner scope', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().enquiries.map(item => item._id);",
+                  "pm.test('Employee A still sees only their own enquiry', () => { pm.expect(ids).to.include(pm.environment.get('enquiryId')); pm.expect(ids).to.not.include(pm.environment.get('enquiryId2')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Employee A fetches my leads with pagination",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenA}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/my?page=1&limit=1"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Paginated my leads returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Pagination limit is applied', () => pm.expect(pm.response.json().enquiries.length).to.be.at.most(1));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify claimed Enquiry 1 is no longer public",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenB}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/enquiries/public"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Public list remains accessible', () => pm.response.to.have.status(200));",
+                  "const ids = pm.response.json().enquiries.map(item => item._id);",
+                  "pm.test('Claimed Enquiry 1 is hidden from public pool', () => pm.expect(ids).to.not.include(pm.environment.get('enquiryId')));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
